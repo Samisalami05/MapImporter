@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,9 +25,9 @@ namespace MapImporter
         Terrain terrain;
         int mapIndex = 0;
 
-        List<bool> mapSelections = new List<bool>(10);
-
         int heightY = 4096;
+
+        int treeAmount = 0;
 
         // Returns every file in a specified path
         string[] getFiles(string path)
@@ -42,14 +42,6 @@ namespace MapImporter
             
         }
 
-        void instantiateMapSelection(List<bool> mapSelections, int length)
-        {
-            for (int i = 0; i < length; i++)
-            {
-                mapSelections.Add(false);
-            }
-        }
-
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             if (sceneName == "Garage")
@@ -59,8 +51,6 @@ namespace MapImporter
                 menuOpen = true;
 
                 files = getFiles(path);
-
-                instantiateMapSelection(mapSelections, files.Length);
                 
 
                 return;
@@ -72,16 +62,7 @@ namespace MapImporter
             {
                 if (mapIndex <= 0)
                 {
-                    int lenght = mapSelections.Count;
-
-                    for (int i = 0; i < lenght; i++) 
-                    { 
-                        if (mapSelections[i])
-                        {
-                            loadMap(i + 1);
-                            return;
-                        }
-                    }
+                   
                     return;
 
                 }
@@ -130,26 +111,102 @@ namespace MapImporter
                 Melon<Main>.Logger.Msg("Wrong file format");
                 return;
             }
+
+            //bool[,] treeMask = readPng(path + "Arboreal-TreeMask.png");
+
+            if (treeAmount > 0)
+            {
+                setTrees(terrains, treeAmount);
+            }
+            
         }
 
-        void setTrees(Terrain[,] terrains)
+        bool[,] readPng(string filePath)
+        {
+            Texture2D tex = null;
+            byte[] fileData;
+
+            if (File.Exists(filePath))
+            {
+                fileData = File.ReadAllBytes(filePath);
+                tex = new Texture2D(2, 2);
+                tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+            }
+            else
+            {
+                Melon<Main>.Logger.Msg("Could not find file");
+                return null;
+            }
+
+
+            if (tex == null)
+            {
+                Melon<Main>.Logger.Msg("Texture not loaded correctly");
+                return null;
+            }
+
+            bool[,] treeMask = new bool[tex.width, tex.height];
+
+            for (int y = 0; y < tex.height; y++)
+            {
+                for (int x = 0; x < tex.width; x++)
+                {
+                    Color pixel = tex.GetPixel(x, y);
+
+                    
+
+                    if (pixel.r != 0 && pixel.g != 0 && pixel.b != 0)
+                    {
+                        treeMask[x, y] = true;
+                        treeAmount++;
+                    }
+                    else
+                        treeMask[x, y] = false;
+                }
+            }
+
+            return treeMask;
+        }
+
+        void setTrees(Terrain[,] terrains, int treeCount)
         {
             for (int y = 0; y < 8; y++)
             {
                 for (int x = 0; x < 8; x++)
                 {
-                    Terrain terrain = terrains[y, x];
-                    int treeCount = terrain.terrainData.treeInstanceCount;
-                    
+                    Terrain terrain = terrains[x, y];
 
-                    
-                    TreeInstance[] trees = new TreeInstance[1];
-                    
-                    trees[0].widthScale = 10;
-                    trees[0].heightScale = 10;
-                    Vector2 treePos = new Vector2(UnityEngine.Random.Range(0, 100) / 100, UnityEngine.Random.Range(0, 100) / 100);
-                    trees[0].position = new Vector3(treePos.x, 0, treePos.y);
-                    Melon<Main>.Logger.Msg("treeCount: " + treeCount + " treePos: " + trees[0].position + " TerrainTreePos: " + terrain.terrainData.treeInstances[0].position);
+                    TreeInstance[] trees = new TreeInstance[treeCount];
+
+                    for (int i = 0; i < trees.Length; i++)
+                    {
+                        trees[i].widthScale = 1.146039f;
+                        trees[i].heightScale = 1.146039f;
+
+                        // Generate random position (normalized)
+                        Vector2 treePos = new Vector2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+
+                        // Convert normalized position to world space
+                        Vector3 worldPos = terrain.GetPosition() + new Vector3(treePos.x * terrain.terrainData.size.x, 0, treePos.y * terrain.terrainData.size.z);
+
+                        // Convert world position to heightmap coordinates
+                        int heightmapX = Mathf.RoundToInt(treePos.x * (terrain.terrainData.heightmapResolution - 1));
+                        int heightmapZ = Mathf.RoundToInt(treePos.y * (terrain.terrainData.heightmapResolution - 1));
+
+                        // Get height from terrain data
+                        float treeHeight = terrain.terrainData.GetHeight(heightmapX, heightmapZ);
+
+                        // Convert back to normalized position
+                        float normalizedHeight = (treeHeight - terrain.GetPosition().y) / terrain.terrainData.size.y;
+
+                        //float treeHeight = terrain.SampleHeight(terrain.GetPosition() + new Vector3(treePos.x * terrain.terrainData.size.x, 0, treePos.y * terrain.terrainData.size.y)) / terrain.terrainData.size.y;
+
+                        trees[i].position = new Vector3(treePos.x, normalizedHeight, treePos.y);
+                        trees[i].prototypeIndex = UnityEngine.Random.Range(0, 3);
+                        trees[i].rotation = UnityEngine.Random.Range(0, (float)Math.PI * 2);
+                    }
+
+                    //Melon<Main>.Logger.Msg("treeCount: " + treeCount + " treePos: " + trees[0].position + " TerrainTreePos: " + terrain.terrainData.treeInstances[0].position);
 
 
 
@@ -157,6 +214,125 @@ namespace MapImporter
 
                 }
             }
+        }
+
+        //void setTrees(Terrain[,] terrains, bool[,] treeMask)
+        //{
+        //    if (treeMask == null)
+        //    {
+        //        Melon<Main>.Logger.Msg("Error in treemask");
+        //    }
+
+        //    for (int y = 0; y < 8; y++)
+        //    {
+        //        for (int x = 0; x < 8; x++)
+        //        {
+        //            Terrain terrain = terrains[x, y];
+
+        //            TreeInstance[] trees = new TreeInstance[treeAmount];
+
+        //            bool[,] dividedTreeMask = DivideTreeMap(treeMask, 1025, x, y);
+
+        //            int res = (int)Mathf.Sqrt(dividedTreeMask.Length);
+
+        //            int i = 0;
+        //            for (int y2 = 0; y2 < res; y2++)
+        //            {
+        //                for (int x2 = 0;x2 < res; x2++)
+        //                {
+        //                    if (dividedTreeMask[x2, y2] == true)
+        //                    {
+        //                        trees[i].widthScale = 1.146039f;
+        //                        trees[i].heightScale = 1.146039f;
+
+        //                        // Generate random position (normalized)
+        //                        Vector2 treePos = new Vector2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+
+        //                        // Convert normalized position to world space
+        //                        Vector3 worldPos = terrain.GetPosition() + new Vector3(treePos.x * terrain.terrainData.size.x, 0, treePos.y * terrain.terrainData.size.z);
+
+        //                        // Convert world position to heightmap coordinates
+        //                        int heightmapX = Mathf.RoundToInt(treePos.x * (terrain.terrainData.heightmapResolution - 1));
+        //                        int heightmapZ = Mathf.RoundToInt(treePos.y * (terrain.terrainData.heightmapResolution - 1));
+
+        //                        // Get height from terrain data
+        //                        float treeHeight = terrain.terrainData.GetHeight(heightmapX, heightmapZ);
+
+        //                        // Convert back to normalized position
+        //                        float normalizedHeight = (treeHeight - terrain.GetPosition().y) / terrain.terrainData.size.y;
+
+        //                        //float treeHeight = terrain.SampleHeight(terrain.GetPosition() + new Vector3(treePos.x * terrain.terrainData.size.x, 0, treePos.y * terrain.terrainData.size.y)) / terrain.terrainData.size.y;
+
+        //                        trees[i].position = new Vector3(treePos.x, normalizedHeight, treePos.y);
+
+        //                        i++;
+
+        //                    }
+        //                }
+        //            }
+
+
+        //            //trees[i].widthScale = 1.146039f;
+        //            //trees[i].heightScale = 1.146039f;
+
+        //            //// Generate random position (normalized)
+        //            //Vector2 treePos = new Vector2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+
+        //            //// Convert normalized position to world space
+        //            //Vector3 worldPos = terrain.GetPosition() + new Vector3(treePos.x * terrain.terrainData.size.x, 0, treePos.y * terrain.terrainData.size.z);
+
+        //            //// Convert world position to heightmap coordinates
+        //            //int heightmapX = Mathf.RoundToInt(treePos.x * (terrain.terrainData.heightmapResolution - 1));
+        //            //int heightmapZ = Mathf.RoundToInt(treePos.y * (terrain.terrainData.heightmapResolution - 1));
+
+        //            //// Get height from terrain data
+        //            //float treeHeight = terrain.terrainData.GetHeight(heightmapX, heightmapZ);
+
+        //            //// Convert back to normalized position
+        //            //float normalizedHeight = (treeHeight - terrain.GetPosition().y) / terrain.terrainData.size.y;
+
+        //            ////float treeHeight = terrain.SampleHeight(terrain.GetPosition() + new Vector3(treePos.x * terrain.terrainData.size.x, 0, treePos.y * terrain.terrainData.size.y)) / terrain.terrainData.size.y;
+
+        //            //trees[i].position = new Vector3(treePos.x, normalizedHeight, treePos.y);
+
+
+
+        //            //Melon<Main>.Logger.Msg("treeCount: " + treeCount + " treePos: " + trees[0].position + " TerrainTreePos: " + terrain.terrainData.treeInstances[0].position);
+
+
+
+        //            terrains[x, y].terrainData.treeInstances = trees;
+
+        //        }
+        //    }
+        //}
+
+        bool[,] DivideTreeMap(bool[,] treeMask, int resolution, int x, int y)
+        {
+            int totalRes = (int)Mathf.Sqrt(treeMask.Length);
+            bool[,] result = new bool[resolution, resolution];
+
+            for (int y2 = 0; y2 < resolution; y2++)
+            {
+                for (int x2 = 0; x2 < resolution; x2++)
+                {
+                    int globalX = x2 + x * resolution;
+                    int globalY = y2 + y * resolution;
+
+                    if (globalX < totalRes && globalY < totalRes)
+                    {
+                        // Copy valid heightmap values
+                        result[x2, y2] = treeMask[globalX, globalY];
+                    }
+                    else
+                    {
+                        // Set out-of-bounds areas to zero
+                        result[x2, y2] = false;
+                    }
+                }
+            }
+
+            return result;
         }
 
         // Returns a 2d array containing the terrains in the scene
@@ -175,10 +351,12 @@ namespace MapImporter
                     }
 
                     terrains[x, y] = terrainRoot.GetComponent<Terrain>();
+                    
                     //Melon<Class1>.Logger.Msg("Terrain: " + terrainRoot.name + "  heightmapRes: " + terrains[x, y].terrainData.heightmapResolution + "  size: " + terrains[x, y].terrainData.size);
 
                 }
             }
+            Melon<Main>.Logger.Msg("treeWIdthScale: " + terrains[0, 0].terrainData.treeInstances[0].widthScale + " treeHeightScale: " + terrains[0, 0].terrainData.treeInstances[0].heightScale);
             return terrains;
         }
 
@@ -251,14 +429,6 @@ namespace MapImporter
 
                     currentTerrain.Flush();
 
-                    List<TreeInstance> trees = new List<TreeInstance>(currentTerrain.terrainData.treeInstances);
-
-                    foreach (TreeInstance tree in trees)
-                    {
-                        tree.position.Equals(Vector3.zero);
-                    }
-
-                    currentTerrain.terrainData.treeInstances = trees.ToArray();
 
                 }
             }
@@ -350,10 +520,7 @@ namespace MapImporter
             Rect labelRect = new Rect(size.x / 2 - width / 2, offsetTop + (height + offsetBetween) * index, width / 3 * 2, height);
             Rect buttonRect = new Rect(size.x / 2 + backgroundRect.width / 5 - 10, offsetTop + (height + offsetBetween) * index + height / 2 - 10, 80, 20);
             Rect toggleRect = new Rect(10f, offsetTop + (height + offsetBetween) * index, 10, 10);
-            bool selection = mapSelections[index];
-
-            mapSelections[index] = GUI.Toggle(toggleRect, selection, "");
-
+           
             GUI.Box(backgroundRect, "");
             GUI.Label(labelRect, name, labelStyle);
 
@@ -373,6 +540,7 @@ namespace MapImporter
 
             GUI.Label(new Rect(20, 30, 200, 20), "Terrain Height: ");
             heightY = int.Parse(GUI.TextField(new Rect(menuSize.x - 80, 30, 60, 20), heightY.ToString()));
+            treeAmount = int.Parse(GUI.TextField(new Rect(menuSize.x - 80, 50, 60, 20), treeAmount.ToString()));
 
             if (files != null)
             {
