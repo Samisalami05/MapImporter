@@ -36,14 +36,13 @@ namespace MapImporter
         // Returns every file in a specified path
         string[] getFiles(string path)
         {
-
             if (Directory.Exists(path))
             {
                 string[] files = Directory.GetFiles(path);
                 return files;
             }
-            return null;
 
+            return null;
         }
 
         // Returns a dictionary containing the map folders with a heightmap and treemask
@@ -102,8 +101,6 @@ namespace MapImporter
                 loadMap(mapList[mapIndex - 1].Value.Item1, mapList[mapIndex - 1].Value.Item2);
 
                 mapIndex = 0;
-
-                changeMiniMap();
             }
         }
 
@@ -420,12 +417,12 @@ namespace MapImporter
             // Adjust positions relative to the window instead of screen coordinates
 
             GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-            labelStyle.alignment = TextAnchor.MiddleCenter;
+            labelStyle.alignment = TextAnchor.MiddleLeft;
             labelStyle.margin.left = 20;
 
 
             Rect backgroundRect = new Rect(size.x / 2 - width / 2 + offsetWidth, offsetTop + (height + offsetBetween) * index, width, height);
-            Rect labelRect = new Rect(size.x / 2 - width / 2 + offsetWidth, offsetTop + (height + offsetBetween) * index, width / 3 * 2, height);
+            Rect labelRect = new Rect(size.x / 2 - width / 2 + offsetWidth + 10, offsetTop + (height + offsetBetween) * index, width / 3 * 2, height);
             Rect buttonRect = new Rect(size.x / 2 + backgroundRect.width / 5 - 10 + offsetWidth, offsetTop + (height + offsetBetween) * index + height / 2 - 10, 80, 20);
             Rect toggleRect = new Rect(10f + offsetWidth, offsetTop + (height + offsetBetween) * index, 10, 10);
 
@@ -465,12 +462,14 @@ namespace MapImporter
                 true                                                  // Vertical scrolling enabled
             );
 
+            
+
             if (mapFiles != null)
             {
                 int i = 0;
                 foreach (var kvp in mapFiles)
                 {
-                    DrawMap(kvp.Key, i, menuSize);
+                    DrawMap(kvp.Key.Remove(0, 10), i, menuSize);
                     i++;
                 }
             }

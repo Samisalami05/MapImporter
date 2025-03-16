@@ -59,7 +59,6 @@ namespace MapImporter
                             }
                         }
                     }
-                    Melon<Main>.Logger.Msg($"Tile [{tx},{ty}] - Trees placed: {treeList.Count}");
                     terrain.terrainData.treeInstances = treeList.ToArray();
                 }
             }
