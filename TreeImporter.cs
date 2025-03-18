@@ -47,7 +47,7 @@ namespace MapImporter
                                 int hmX = Mathf.RoundToInt(normX * (terrain.terrainData.heightmapResolution - 1));
                                 int hmY = Mathf.RoundToInt(normY * (terrain.terrainData.heightmapResolution - 1));
                                 float heightValue = terrain.terrainData.GetHeight(hmX, hmY);
-                                float normHeight = (heightValue - terrain.GetPosition().y) / terrain.terrainData.size.y;
+                                float normHeight = (heightValue - terrain.GetPosition().y - 1) / terrain.terrainData.size.y; //Added " - 1" to lower trees. 3/17/2025 Chad_Brochill.
 
                                 TreeInstance tree = new TreeInstance();
                                 tree.position = new Vector3(normX, normHeight, normY);
@@ -94,7 +94,7 @@ namespace MapImporter
                         float treeHeight = terrain.terrainData.GetHeight(heightmapX, heightmapZ);
 
                         // Convert back to normalized position
-                        float normalizedHeight = (treeHeight - terrain.GetPosition().y) / terrain.terrainData.size.y;
+                        float normalizedHeight = (treeHeight - terrain.GetPosition().y - 1) / terrain.terrainData.size.y; //Added " - 1" to lower trees. 3/17/2025 Chad_Brochill.
 
                         //float treeHeight = terrain.SampleHeight(terrain.GetPosition() + new Vector3(treePos.x * terrain.terrainData.size.x, 0, treePos.y * terrain.terrainData.size.y)) / terrain.terrainData.size.y;
 
