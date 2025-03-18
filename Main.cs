@@ -24,14 +24,11 @@ namespace MapImporter
         Dictionary<string, (string, string)> mapFiles;
 
         bool menuOpen = false;
+        bool generateTrees = false;
 
         int mapIndex = 0;
-
         int heightY = 4096;
-
         int treeAmount = 0;
-
-        bool generateTrees = false;
 
         // Returns every file in a specified path
         string[] getFiles(string path)
@@ -162,6 +159,7 @@ namespace MapImporter
             else if (rawFilePath.EndsWith(".raw"))
             {
                 float[,] map = ReadRawHeightmap(rawFilePath, 8192, true);
+                
                 LoadTerrains(map, terrains);
             }
             else
