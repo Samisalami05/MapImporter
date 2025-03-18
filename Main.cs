@@ -343,8 +343,8 @@ namespace MapImporter
             {
                 for (int x2 = 0; x2 < resolution; x2++)
                 {
-                    int globalX = x2 + x * resolution;
-                    int globalY = y2 + y * resolution;
+                    int globalX = x2 + x * (resolution - 1);    // CHANGE: Overlap tiles by one pixel. 3/17/2025 Chad_Brochill
+                    int globalY = y2 + y * (resolution - 1);    // CHANGE: Overlap tiles by one pixel. 3/17/2025 Chad_Brochill
 
                     if (globalX < totalRes && globalY < totalRes)
                     {
