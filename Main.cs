@@ -95,7 +95,17 @@ namespace MapImporter
 
                 var mapList = mapFiles.ToList();
 
-                loadMap(mapList[mapIndex - 1].Value.Item1, mapList[mapIndex - 1].Value.Item2);
+                string mapPath = mapList[mapIndex - 1].Key;
+
+                MapData data = MapData.ReadJson(mapPath, "config");
+
+                if (data == null)
+                {
+                    Melon<Main>.Logger.Msg("Config file could not be found in " + mapPath);
+                    return;
+                }
+
+                loadMap(data, mapList[mapIndex - 1].Value.Item1, mapList[mapIndex - 1].Value.Item2);
 
                 mapIndex = 0;
             }
@@ -133,7 +143,7 @@ namespace MapImporter
         }
 
         // Loads the desired map
-        void loadMap(string rawFilePath, string treeMaskPath)
+        void loadMap(MapData mapData, string rawFilePath, string treeMaskPath)
         {
             Melon<Main>.Logger.Msg("Loaded: " + rawFilePath);
 
@@ -151,23 +161,30 @@ namespace MapImporter
                 return;
             }
 
-            if (rawFilePath.EndsWith(".txt"))
+            if (rawFilePath.EndsWith(".raw"))
             {
-                float[,] map = ReadTxtFile(rawFilePath);
-                LoadTerrains(map, terrains);
-            }
-            else if (rawFilePath.EndsWith(".raw"))
-            {
-                float[,] map = ReadRawHeightmap(rawFilePath, 8192, true);
+                float[,] heightmap = ReadRawHeightmap(rawFilePath, mapData.resolution, true);
+                if (mapData.size < 1)
+                {
+                    Melon<Main>.Logger.Msg("Invalid size: Size cant be bellow 1");
+                }
+                else
+                {
+                    heightmap = scaleHeightmap(mapData, heightmap);
+                }
                 
-                LoadTerrains(map, terrains);
+                if (mapData.isSmoothed)
+                {
+                    heightmap = smoothHeightmap(mapData, heightmap, mapData.smoothRadius);
+                }
+                
+                LoadTerrains(heightmap, terrains);
             }
             else
             {
                 Melon<Main>.Logger.Msg("Wrong file format");
                 return;
             }
-
             
             if (File.Exists(treeMaskPath) && generateTrees == false)
             {
@@ -184,6 +201,59 @@ namespace MapImporter
             {
                 TreeImporter.setRandomTrees(terrains, treeAmount);
             }
+        }
+
+        float[,] smoothHeightmap(MapData data, float[,] heightmap, int amount)
+        {
+            int resolution = (int)Mathf.Sqrt(heightmap.Length);
+            float[,] smoothedHeightmap = new float[resolution, resolution];
+            for (int y = 0; y < data.resolution; y++)
+            {
+                for (int x = 0; x < data.resolution; x++)
+                {
+                    float sum = 0;
+                    for (int i = 0; i < amount; i++)
+                    {
+                        for (int j = 0; j < amount; j++)
+                        {
+                            if (x + i >= data.resolution || y + j >= data.resolution)
+                            {
+                                continue;
+                            }
+                            
+                            sum += heightmap[x + i, y + j];                            
+                        }
+                    }
+                    float height = sum / (amount * amount);
+                    smoothedHeightmap[x, y] = height;
+                }
+            }
+            Melon<Main>.Logger.Msg("Smoothed heightmap");
+            return smoothedHeightmap;
+        }
+
+        float[,] scaleHeightmap(MapData data, float[,] heightmap)
+        {
+            float[,] scaledHeightmap = new float[8200, 8200];
+            for (int y = 0; y < data.resolution; y++)
+            {
+                for (int x = 0; x < data.resolution; x++)
+                {
+                    for (int i = 0; i < data.size; i++)
+                    {
+                        for (int j = 0; j < data.size; j++)
+                        {
+                            if (x * data.size + i >= 8200 || y * data.size + j >= 8200)
+                            {
+                                continue;
+                            }
+                            scaledHeightmap[x * data.size + i, y * data.size + j] = heightmap[x, y];
+                        }
+                    }
+                }
+            }
+            Melon<Main>.Logger.Msg("Scaled heightmap");
+            return scaledHeightmap;
         }
 
         // Modified: Removed treeAmount++ to avoid interference with GUI value.
@@ -263,7 +333,7 @@ namespace MapImporter
 
 
         // Reads a raw file as a heightmap
-        float[,] ReadRawHeightmap(string filePath, int resolution, bool is16Bit)
+        float[,] ReadRawHeightmap(string filePath, uint resolution, bool is16Bit)
         {
             if (!File.Exists(filePath))
             {
@@ -272,7 +342,7 @@ namespace MapImporter
             }
 
             byte[] rawData = File.ReadAllBytes(filePath);
-            int expectedSize = resolution * resolution * (is16Bit ? 2 : 1);
+            int expectedSize = (int)resolution * (int)resolution * (is16Bit ? 2 : 1);
 
             if (rawData.Length != expectedSize)
             {
@@ -474,7 +544,7 @@ namespace MapImporter
 
             GUI.EndScrollView();
 
-            GUI.Label(new Rect(menuSize.x / 2 - 100, menuSize.y - 40, 200, 20), "Made by Samisalami", centeredStyle);
+            GUI.Label(new Rect(menuSize.x / 2 - 100, menuSize.y - 40, 200, 40), "Made by Samisalami and Chad_Brochill", centeredStyle);
 
             // Make the window draggable
             GUI.DragWindow(new Rect(0, 0, menuSize.x, 20));

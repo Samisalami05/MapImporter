@@ -44,6 +44,10 @@
     <Reference Include="MelonLoader">
       <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Sledders\MelonLoader\net6\MelonLoader.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Sledders\Sledders_Data\Managed\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression.FileSystem" />
@@ -104,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />
+    <Compile Include="MapData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TreeImporter.cs" />
   </ItemGroup>
