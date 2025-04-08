@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using MelonLoader;
 using MapImporter; // The namespace of your mod class
 // ...
-[assembly: MelonInfo(typeof(MapImporter.Main), "MapImporter", "1.2.0", "Samisalami")]
+[assembly: MelonInfo(typeof(MapImporter.Main), "MapImporter", "1.2.1", "Samisalami")]
 [assembly: MelonGame("Hanki Games", "Sledders")]
 
 // General Information about an assembly is controlled through the following
