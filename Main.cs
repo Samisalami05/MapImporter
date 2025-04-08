@@ -175,7 +175,7 @@ namespace MapImporter
                 
                 if (mapData.isSmoothed)
                 {
-                    heightmap = smoothHeightmap(mapData, heightmap, mapData.smoothRadius);
+                    heightmap = betterSmoothHeightmap(mapData, heightmap, mapData.smoothRadius);
                 }
                 
                 LoadTerrains(heightmap, terrains);
@@ -196,39 +196,46 @@ namespace MapImporter
                 }
             }
 
-            // Fall back to random tree placement if treeAmount (from GUI) is greater than 0.
-            if (treeAmount > 0)
+            // Fall back to random tree placement if treeAmount (from GUI) is equal or greater than 0.
+            if (treeAmount >= 0)
             {
                 TreeImporter.setRandomTrees(terrains, treeAmount);
             }
+            
         }
 
-        float[,] smoothHeightmap(MapData data, float[,] heightmap, int amount)
+        float[,] betterSmoothHeightmap(MapData data, float[,] heightmap, int areaOfEffect)
         {
+            if (areaOfEffect < 1)
+            {
+                Melon<Main>.Logger.Msg("Invalid smoothing radius");
+                return null;
+            }
+
             int resolution = (int)Mathf.Sqrt(heightmap.Length);
             float[,] smoothedHeightmap = new float[resolution, resolution];
-            for (int y = 0; y < data.resolution; y++)
+
+            for (int y = 0; y < resolution; y++)
             {
-                for (int x = 0; x < data.resolution; x++)
+                for (int x = 0; x < resolution; x++)
                 {
                     float sum = 0;
-                    for (int i = 0; i < amount; i++)
+                    for (int i = -areaOfEffect; i < areaOfEffect; i++)
                     {
-                        for (int j = 0; j < amount; j++)
+                        for (int j = -areaOfEffect; j < areaOfEffect; j++)
                         {
-                            if (x + i >= data.resolution || y + j >= data.resolution)
+                            if (x + i >= resolution || y + j >= resolution || x + i < 0 || y + j < 0)
                             {
                                 continue;
                             }
-                            
-                            sum += heightmap[x + i, y + j];                            
+
+                            sum += heightmap[x + i, y + j];
                         }
                     }
-                    float height = sum / (amount * amount);
+                    float height = sum / ((areaOfEffect * 2 + 1) * (areaOfEffect * 2 + 1));
                     smoothedHeightmap[x, y] = height;
                 }
             }
-            Melon<Main>.Logger.Msg("Smoothed heightmap");
             return smoothedHeightmap;
         }
 
@@ -252,7 +259,6 @@ namespace MapImporter
                     }
                 }
             }
-            Melon<Main>.Logger.Msg("Scaled heightmap");
             return scaledHeightmap;
         }
 
