@@ -32,6 +32,8 @@ namespace MapImporter
         public int heightY = 4096;
         public int treeAmount = 0;
 
+        private Texture2D defaultMiniMap;
+
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             if (sceneName == "Garage")
@@ -49,8 +51,11 @@ namespace MapImporter
 
             if (sceneName == "Idaho")
             {
+                
                 if (mapIndex <= 0)
                 {
+                    setMiniMap(defaultMiniMap);
+                    
                     return;
                 }
 
@@ -60,6 +65,8 @@ namespace MapImporter
 
                 MapData data = MapData.ReadJson(mapPath, "config");
                 Map map = new Map(this, data);
+
+                changeMiniMap(mapPath);
 
                 if (data == null)
                 {
@@ -80,8 +87,21 @@ namespace MapImporter
         }
 
         // Test: changes the minimap (does not work)
-        void changeMiniMap()
+        void changeMiniMap(string mapPath)
         {
+            if (Directory.Exists(mapPath + "/minimap") == false)
+            {
+                Melon<Main>.Logger.Msg("Loading terrain without minimap");
+                setMiniMap(defaultMiniMap);
+                
+                return;
+            }
+            string minimapPath = Directory.GetFiles(mapPath + "/minimap", "*.png").FirstOrDefault();
+
+            Texture2D minimap = FileManager.readPng(minimapPath);
+
+            if (minimap == null) { return; }
+
             GameObject mapView = GameObject.Find("LevelEssentials/LevelData");
 
             if (mapView == null)
@@ -94,12 +114,51 @@ namespace MapImporter
 
             LevelData levelData = levelDataContainer.levelData;
 
+            if (defaultMiniMap == null)
+            {
+                defaultMiniMap = levelData.mapBackground;
+            }
 
             if (levelData != null)
             {
-                levelData.mapBackground = new Texture2D(4096, 4096);
+                levelData.mapBackground = minimap;
+            }
+
+            GameObject hud = GameObject.Find("LevelEssentials/Hud");
+            if (hud.activeSelf == true)
+            {
+                hud.SetActive(false);
+                hud.SetActive(true);
             }
         }
 
+        private void setMiniMap(Texture2D texture)
+        {
+            if (texture == null) { return; }
+
+            GameObject mapView = GameObject.Find("LevelEssentials/LevelData");
+
+            if (mapView == null)
+            {
+                Melon<Main>.Logger.Error("Could not find mapView");
+                return;
+            }
+
+            LevelDataContainer levelDataContainer = mapView.GetComponent<LevelDataContainer>();
+
+            LevelData levelData = levelDataContainer.levelData;
+
+            if (levelData != null)
+            {
+                levelData.mapBackground = texture;
+            }
+
+            GameObject hud = GameObject.Find("LevelEssentials/Hud");
+            if (hud.activeSelf == true)
+            {
+                hud.SetActive(false);
+                hud.SetActive(true);
+            }
+        }
     }
 }
