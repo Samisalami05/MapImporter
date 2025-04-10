@@ -64,7 +64,7 @@ namespace MapImporter
             }
         }
 
-
+        // Generates a random number of trees on each terrain tile.
         public static void setRandomTrees(Terrain[,] terrains, int treeCount)
         {
             for (int y = 0; y < 8; y++)
@@ -111,6 +111,43 @@ namespace MapImporter
 
                 }
             }
+        }
+
+        // Generates a tree mask from a PNG file.
+        public static bool[,] generateTreeMap(string filePath)
+        {
+            Texture2D tex = FileManager.readPng(filePath);
+
+            if (tex == null)
+            {
+                Melon<Main>.Logger.Error("Texture not loaded correctly");
+                return null;
+            }
+
+            bool[,] treeMask = new bool[tex.width, tex.height];
+
+            // Loop through each pixel but flip the Y coordinate.
+            // This will automatically invert the image vertically.
+            for (int y = 0; y < tex.height; y++)
+            {
+                for (int x = 0; x < tex.width; x++)
+                {
+                    // Flip the vertical coordinate: use flippedY = tex.height - 1 - y.
+                    int flippedY = tex.height - 1 - y;
+                    Color pixel = tex.GetPixel(x, flippedY);
+                    // If pixel is not black, mark it as true.
+                    if (pixel.r != 0 && pixel.g != 0 && pixel.b != 0)
+                    {
+                        treeMask[x, y] = true;
+                    }
+                    else
+                    {
+                        treeMask[x, y] = false;
+                    }
+                }
+            }
+
+            return treeMask;
         }
     }
 }

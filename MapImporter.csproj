@@ -107,10 +107,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileManager.cs" />
     <Compile Include="Main.cs" />
+    <Compile Include="Map.cs" />
     <Compile Include="MapData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TreeImporter.cs" />
+    <Compile Include="Ui.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
