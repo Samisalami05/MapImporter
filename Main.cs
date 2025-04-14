@@ -28,6 +28,8 @@ namespace MapImporter
         public int mapIndex = 0;
 
         public bool generateTrees = false;
+        public bool overrideHeight = false;
+        public bool overrideTreeAmount = false;
 
         public int heightY = 4096;
         public int treeAmount = 0;

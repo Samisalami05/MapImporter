@@ -99,10 +99,20 @@ namespace MapImporter
                 }
             }
 
+            int treeAmount;
+            if (main.overrideTreeAmount)
+                treeAmount = main.treeAmount;
+            else
+                treeAmount = mapData.treeAmount;
+
             // Fall back to random tree placement if treeAmount (from GUI) is equal or greater than 0.
-            if (main.treeAmount >= 0)
+            if (treeAmount >= 0)
             {
-                TreeImporter.setRandomTrees(terrains, main.treeAmount);
+                TreeImporter.setRandomTrees(terrains, treeAmount);
+            }
+            else
+            {
+                Melon<Main>.Logger.Error("Invalid tree amount: Tree amount cant be bellow 0");
             }
 
         }
@@ -179,7 +189,12 @@ namespace MapImporter
                     currentTerrain.Flush();
 
                     int resolution = currentTerrain.terrainData.heightmapResolution;
-                    Vector3 size = new Vector3(512, main.heightY, 512);
+                    int terrainHeigt;
+                    if (main.overrideHeight)
+                        terrainHeigt = main.heightY;
+                    else
+                        terrainHeigt = mapData.heightY;
+                    Vector3 size = new Vector3(512, terrainHeigt, 512);
 
                     currentTerrain.terrainData.size = size;
                     currentTerrain.terrainData.heightmapResolution = 1025;

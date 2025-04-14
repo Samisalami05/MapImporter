@@ -60,14 +60,17 @@ namespace MapImporter
 
             GUI.Label(new Rect(20, 30, 200, 20), "Terrain Height: ");
             main.heightY = int.Parse(GUI.TextField(new Rect(menuSize.x - 80, 30, 60, 20), main.heightY.ToString()));
+            main.overrideHeight = GUI.Toggle(new Rect(menuSize.x - 100, 30, 20, 20), main.overrideHeight, "");
             GUI.Label(new Rect(20, 50, 200, 20), "Tree Amount: ");
             main.treeAmount = int.Parse(GUI.TextField(new Rect(menuSize.x - 80, 50, 60, 20), main.treeAmount.ToString()));
             main.generateTrees = GUI.Toggle(new Rect(menuSize.x - 100, 50, 20, 20), main.generateTrees, "");
+            GUI.Label(new Rect(20, 70, 200, 20), "Override Tree Amount: ");
+            main.overrideTreeAmount = GUI.Toggle(new Rect(menuSize.x - 40, 70, 20, 20), main.overrideTreeAmount, "");
 
             int contentHeight = (main.mapFiles != null) ? (main.mapFiles.Count * 50 + 20) : 0; // Dynamic height for scrolling
 
             scrollPosition = GUI.BeginScrollView(
-                new Rect(10, 80, menuSize.x - 15, menuSize.y - 120),  // Scroll view area
+                new Rect(10, 100, menuSize.x - 15, menuSize.y - 150),  // Scroll view area
                 scrollPosition,
                 new Rect(0, 0, menuSize.x - 35, contentHeight),       // Content area size
                 false,                                                // Horizontal scrolling disabled

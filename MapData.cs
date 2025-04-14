@@ -16,14 +16,18 @@ namespace MapImporter
         public uint size;
         public bool isSmoothed;
         public int smoothRadius;
+        public int heightY;
+        public int treeAmount;
 
-        public MapData(uint resolution, bool is16bit, uint size, bool isSmoothed, int smoothRadius)
+        public MapData(uint resolution, bool is16bit, uint size, bool isSmoothed, int smoothRadius, int heightY, int treeAmount)
         {
             this.resolution = resolution;
             this.is16bit = is16bit;
             this.size = size;
             this.isSmoothed = isSmoothed;
             this.smoothRadius = smoothRadius;
+            this.heightY = heightY;
+            this.treeAmount = treeAmount;
         }
 
         // Reads a JSON file and returns a MapData object

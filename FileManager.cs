@@ -37,7 +37,7 @@ namespace MapImporter
             }
             else
             {
-                Melon<Main>.Logger.Msg("Could not find file");
+                Melon<Main>.Logger.Error("Could not find file");
                 return null;
             }
 
