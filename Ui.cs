@@ -46,7 +46,7 @@ namespace MapImporter
             if (GUI.Button(buttonRect, "Load Map"))
             {
                 main.mapIndex = index + 1;
-                SceneManager.LoadScene(4);
+                SceneManager.LoadScene(5);
             }
         }
 
